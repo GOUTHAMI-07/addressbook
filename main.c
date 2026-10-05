@@ -4,8 +4,8 @@
 int main() {
     int choice;
     AddressBook addressBook;
-    initialize(&addressBook); // Initialize the address book
-
+    initialize(&addressBook);
+    loadContactsFromFile(&addressBook);
     do {
         printf("\nAddress Book Menu:\n");
         printf("1. Create contact\n");

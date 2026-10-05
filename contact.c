@@ -5,10 +5,12 @@
 #include "file.h"
 #include <ctype.h>
 #include <string.h>
+int matches[100];
+int editindex = -1;
 void name(AddressBook *addressBook);
 void phone(AddressBook *addressBook);
 void email(AddressBook *addressBook);
-void search(AddressBook *addressBook);
+int search(AddressBook *addressBook);
 
 
 void listContacts(AddressBook *addressBook) //int sortCriteria)
@@ -68,7 +70,8 @@ void listContacts(AddressBook *addressBook) //int sortCriteria)
     }  
     for(int i=0;i<addressBook->contactCount;i++)
     {
-            printf("%s\t%s\t%s\n",addressBook->contacts[i].name,addressBook->contacts[i].phone,addressBook->contacts[i].email);
+            printf("%s\t%s\t%s\n",addressBook->contacts[i].name,
+                addressBook->contacts[i].phone,addressBook->contacts[i].email);
     } 
 }
 
@@ -96,11 +99,7 @@ void createContact(AddressBook *addressBook)
     addressBook->contactCount++;
 }
 
-
-   
-
-
-void searchContact(AddressBook *addressBook) 
+int searchContact(AddressBook *addressBook) 
 {
     /* Define the logic for search */
     search(addressBook);
@@ -111,27 +110,82 @@ void searchContact(AddressBook *addressBook)
 void editContact(AddressBook *addressBook)
 {
 	/* Define the logic for Editcontact */
-    printf("enter name to search");
-    search(addressBook);
-    int field;
-    printf("enter field to edit 1.name 2.phone 3.email");
-    scanf("%d",&field);
-    switch(field)
+    int choice;
+    int present;
+    int fieldchoice;
+
+    present = search(addressBook);
+
+    if(present == 0)
+    {
+        return;
+    }
+
+    printf("Enter contact from 1 to %d to edit: ", present);
+    scanf("%d", &choice);
+
+    if(choice < 1 || choice > present)
+    {
+        printf("Invalid choice\n");
+        return;
+    }
+
+    editindex = matches[choice - 1];
+    addressBook->contacts[addressBook->contactCount] =
+        addressBook->contacts[editindex];
+
+    printf("Enter field to edit\n");
+    printf("1. Name\n");
+    printf("2. Phone\n");
+    printf("3. Email\n");
+    scanf("%d",&fieldchoice);
+
+    switch(fieldchoice)
     {
         case 1:
-        char newname[20];
-        printf("enter newname");
-        scanf("%s",newname);
-        int i=0;
-        printf("enter the index");
-        scanf("%d",&i);
-        strcpy(addressBook->contacts[i].name,newname);
+        {
+            name(addressBook);
+
+            strcpy(addressBook->contacts[editindex].name,
+                   addressBook->contacts[addressBook->contactCount].name);
+
+            printf("Name updated successfully\n");
+            break;
+        }
+
         case 2:
-        char newphone[10];
-        printf("enter newnumber");
-        scanf("%s",newnumber);
-        int i=0;
+        {
+            phone(addressBook);
+
+            strcpy(addressBook->contacts[editindex].phone,
+                   addressBook->contacts[addressBook->contactCount].phone);
+
+            printf("Phone updated successfully\n");
+            break;
+        }
+
+        case 3:
+        {
+            email(addressBook);
+
+            strcpy(addressBook->contacts[editindex].email,
+                   addressBook->contacts[addressBook->contactCount].email);
+
+            printf("Email updated successfully\n");
+            break;
+        }
+
+        default:
+        {
+            printf("Invalid choice\n");
+            editindex = -1;
+            return;
+        }
     }
+
+    editindex = -1;
+
+    printf("Contact updated successfully\n");
 }
 
 void deleteContact(AddressBook *addressBook)
@@ -139,13 +193,13 @@ void deleteContact(AddressBook *addressBook)
 	/* Define the logic for deletecontact */
     //squeeze the array
     int del;
-    printf("delete based on 1.name 2.phone 3.email");
+    printf("delete based on 1.name 2.phone 3.email\n");
     scanf("%d",&del);
     switch(del){
         case 1:{
         char n[20];
         printf("enter name to delete");
-        scanf("%s",n);
+        scanf(" %[^\n]",n);
         int count=0;
         int match[100];
         for(int i=0;i<addressBook->contactCount;i++)
@@ -160,6 +214,10 @@ void deleteContact(AddressBook *addressBook)
             }
             
 
+        }
+        if(count==0){
+            printf("Contact not found to delete");
+            break;
         }
         int s;
         printf("enter the serial number");
@@ -191,6 +249,10 @@ void deleteContact(AddressBook *addressBook)
             
 
         }
+        if(count==0){
+            printf("Contact not found to delete");
+            break;
+        }
         int s;
         printf("enter the serial number");
         scanf("%d",&s);
@@ -221,6 +283,10 @@ void deleteContact(AddressBook *addressBook)
             
 
         }
+        if(count==0){
+            printf("Contact not found to delete");
+            break;
+        }
         int s;
         printf("enter the serial number");
         scanf("%d",&s);
@@ -246,16 +312,18 @@ void name(AddressBook *addressBook)
     {
     int valid=1;
     printf("Enter your name\n");
-    scanf("%s",addressBook->contacts[addressBook->contactCount].name);
+    scanf(" %[^\n]",addressBook->contacts[addressBook->contactCount].name);
     int n=strlen(addressBook->contacts[addressBook->contactCount].name);
     if(n<2)
     {
         valid=0;
+        printf("Invalid name must contain atleast 2 char\n");
     }
     for(int i=0;i<n;i++)
     {
     if((!isalnum(addressBook->contacts[addressBook->contactCount].name[i]))&&!(isspace(addressBook->contacts[addressBook->contactCount].name[i]))){
         valid=0;
+        printf("Invalid name ,name should contain only alphabet,number and space\n");
         break;
     }
     }
@@ -263,28 +331,40 @@ void name(AddressBook *addressBook)
     {
         break;
     }
-    else
-    {
-        printf("Invalid name,name must contain atleat 2 char and name should conatain only alphabet number and sapce\n");
-    }
+
 }
     
 }
 void phone(AddressBook *addressBook)
 {
-    while(1)
+    int unique=1;
+    while(unique)
     {
+    int unique=1;
     printf("Enter your phone number\n");
     scanf("%s",addressBook->contacts[addressBook->contactCount].phone);
     if(strlen(addressBook->contacts[addressBook->contactCount].phone)!=10)
     {
-        printf("invalid number,number must be 10 digits\n");
+        unique=0;
+        printf("Invalid Number,number must be 10 digits\n");
     }
     else if(addressBook->contacts[addressBook->contactCount].phone[0]<'6')
     {
-        printf("Number should be in range of 6-9\n");
+        unique=0;
+        printf("Invalidnumber Number,number should be in range of 6-9\n");
     }
     else
+    {
+        for(int i=0;i<addressBook->contactCount;i++){
+            if(strcmp(addressBook->contacts[i].phone,addressBook->contacts[addressBook->contactCount].phone)==0)
+            {
+                unique=0;
+                printf("Phone number already exists\n");
+                break;
+            }
+        }
+    }
+    if(unique)
     {
         break;
     }
@@ -296,7 +376,7 @@ void email(AddressBook *addressBook)
     int valid=1;
      while(valid){
         int valid=1;
-        printf("Enter your email");
+        printf("Enter your email\n");
         scanf("%s",addressBook->contacts[addressBook->contactCount].email);
         int n=strlen(addressBook->contacts[addressBook->contactCount].email);
         char *dot=strstr(addressBook->contacts[addressBook->contactCount].email,".com");
@@ -316,29 +396,52 @@ void email(AddressBook *addressBook)
             printf("Inavlid,email should contain atleast one '@' char\n");
             valid=0;
         }
-        else if(dot==at+1)
+        else{
+            int count=0;
+            for(int i=0;i<n;i++){
+                if(addressBook->contacts[addressBook->contactCount].email[i]=='@'){
+                    count++;
+                }
+            }
+            if(count!=1){
+                valid=0;
+                printf("Invalid email should contain only one '@'\n");
+            }
+        }
+        if(dot==at+1)
         {
             printf("Invaild atleast one char should be present between @ and .com");
             valid=0;
         }
-        else if(addressBook->contacts[addressBook->contactCount].email[0]=='@')
+        else if(!(isalnum(addressBook->contacts[addressBook->contactCount].email[0])))
         {
-            printf("Invaild first character should not be @");
+            printf("Invaild first character should be only alphabet or number");
             valid=0;
         }
         else
         {
         for(int i=0;i<n;i++)
         {
-            char ch=addressBook->contacts[addressBook->contactCount].email[i];
-        if(!(islower(ch)||ch=='.'|| ch=='@' ))
+        char ch=addressBook->contacts[addressBook->contactCount].email[i];
+        if(!(islower(ch)||ch=='.'|| ch=='@'||isdigit(ch) ))
         {
-            printf("Invalid,email must contain only lower case letters,@ and . only\n");
+            printf("Invalid,email must contain only lower case letters @ and . only\n");
             valid=0;
             break;
         }
         }
     }
+if(valid)
+{
+    for(int i=0;i<addressBook->contactCount;i++){
+        if(strcmp(addressBook->contacts[i].email,addressBook->contacts[addressBook->contactCount].email)==0){
+            printf("email already exists\n");
+            valid=0;
+            break;
+        }
+        
+    }
+}
 if(valid)
 {
     break;
@@ -347,81 +450,81 @@ if(valid)
 
 
 }
-void search(AddressBook *addressBook)
+int search(AddressBook *addressBook)
 {
     int n;
+    int count=0;
     printf("Search Based on\n1.Name\n2.Phone\n3.Email");
     scanf("%d",&n);
     //compare using strcasestr if searching by name
     switch(n){
         case 1:
         {
-        int f=1;
         char name1[50];
         printf("Enter name to search");
-        scanf("%s",name1);
+        scanf(" %[^\n]",name1);
         for(int i=0;i<addressBook->contactCount;i++){
         char *ch=strcasestr(addressBook->contacts[i].name , name1);
         if(ch!=NULL){
-            printf("%d %s\n",i,addressBook->contacts[i].name);
-            f=0;
+            printf("%d.%s %s %s\n",count+1,addressBook->contacts[i].name,
+                addressBook->contacts[i].phone,addressBook->contacts[i].email);
+                matches[count]=i;
+                count++;
         }
         
-    }
-    if(f==1)
-    {
-        printf("not found");
     }
     break;
 }
     
     case 2:
     {
-    int f=1;
     char num[10];
     printf("enter number to search");
     scanf("%s",num);
     for(int i=0;i<addressBook->contactCount;i++){
-        char *ch=strstr(addressBook->contacts[i].phone ,num);
+        char *ch=strcasestr(addressBook->contacts[i].phone ,num);
         if(ch!=NULL){
-            printf("%d %s\n",i,addressBook->contacts[i].phone);
-            f=0;
+            printf("%d.%s %s %s\n",count+1,addressBook->contacts[i].name,
+                addressBook->contacts[i].phone,addressBook->contacts[i].email);
+                matches[count]=i;
+                count++;
         }
         
     }
-    if(f)
-    {
-        printf("not found");
-
-    }
-
     break;
 }
     case 3:
     {
-    int f=1;
     char mail[20];
     printf("enter email to search");
     scanf("%s",mail);
     for(int i=0;i<addressBook->contactCount;i++){
         char *ch=strcasestr(addressBook->contacts[i].email ,mail);
         if(ch!=NULL){
-            printf("%d %s\n",i,addressBook->contacts[i].email);
-            f=0;
+            printf("%d.%s %s %s\n",count+1,addressBook->contacts[i].name,
+                addressBook->contacts[i].phone,addressBook->contacts[i].email);
+                matches[count]=i;
+                count++;
         }
        
     }
-    if(f)
-    {
-        printf("not found");
-    }
+
     break;
-
- }
-
-
- }
 }
+    default:
+    printf("Invalid choice\n");
+    return 0;
+    }
+
+    if(count == 0)
+    {
+        printf("Contact not found\n");
+    }
+
+    return count;
+}
+
+
 
 
 
